@@ -1,15 +1,31 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
+import { CookiesProvider } from 'react-cookie';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
+import MainComponent from './components/MainComponent';
+import Channel from './pages/Channel';
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <MainComponent />,
+  },
+  {
+    path: 'channel/:userId',
+    element: <Channel />,
+  },
+]);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <CookiesProvider>
+      <RouterProvider router={router} />
+    </CookiesProvider>
   </React.StrictMode>,
 );
 
