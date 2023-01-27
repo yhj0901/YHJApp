@@ -17,7 +17,7 @@ module.exports = {
     'import/no-unresolved': 'off',
     'no-console': 0,
     // React
-    'react/jsx-no-useless-fragment': 'warn',
+    'react/jsx-no-useless-fragment': 'off',
     'react/function-component-definition': [
       'error',
       {

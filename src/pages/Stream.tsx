@@ -2,7 +2,6 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
 import { useParams } from 'react-router-dom';
-import { Player } from 'video-react';
 
 interface userVideoInfoType {
   id: string;
@@ -65,9 +64,13 @@ const Stream = (props: any) => {
               {userVideoInfo.user_name} - 시청자 : {userVideoInfo.view_count}{' '}
               {userVideoInfo.type}
             </p>
-            {/* <Player playsInline src={userVideoInfo.url}>
-              aaa
-            </Player> */}
+            <iframe
+              src={`https://player.twitch.tv/?video=${params.sereadId}&parent=localhost`}
+              height="500"
+              width="700"
+              allowFullScreen
+              title={userVideoInfo.title}
+            />
           </div>
         </>
       )}
