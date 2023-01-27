@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import HeaderComponent from './HeaderComponent';
 import VideoListComponent from './VideoListComponent';
 
-const MainComponent = (props: any) => {
+const MainComponent = () => {
   const [twitchTokenCookies, setCookie] = useCookies(['twitchAccessToken']);
   const body = {
     client_id: 'k5fvg1rha0tyqhd8hwsavocg2h051u',
@@ -55,9 +55,7 @@ const MainComponent = (props: any) => {
         {/** header */}
         <HeaderComponent />
         {/** body */}
-        <VideoListComponent
-          accessToken={twitchTokenCookies.twitchAccessToken}
-        />
+        <VideoListComponent />
       </div>
     </>
   );

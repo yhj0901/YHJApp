@@ -1,7 +1,10 @@
 import axios from 'axios';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCookies } from 'react-cookie';
 import { useInView } from 'react-intersection-observer';
 import { Link } from 'react-router-dom';
+
+const nextPageUrl = 'https://api.twitch.tv/helix/streams?first=40&after=';
 
 interface streamsType {
   game_id: string;
@@ -21,27 +24,26 @@ interface streamsType {
   viewer_count: number;
 }
 
-const VideoListComponent = (props: any) => {
+const VideoListComponent = () => {
+  const [twitchTokenCookies] = useCookies(['twitchAccessToken']);
   const [streamsList, setStreamsList] = useState([]);
   const [ref, inView] = useInView();
   const [page, setPage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  console.log(props);
   const header = {
     'client-id': 'k5fvg1rha0tyqhd8hwsavocg2h051u',
-    Authorization: `Bearer ${props.accessToken}`,
+    Authorization: `Bearer ${twitchTokenCookies.twitchAccessToken}`,
   };
 
   // 서버에서 아이템을 가지고 오는 함수
   const getItemList = () => {
     setLoading(true);
     axios
-      .get(`https://api.twitch.tv/helix/streams?first=40&after=${page}`, {
+      .get(`${nextPageUrl}${page}`, {
         headers: header,
       })
       .then(response => {
-        console.log(response.data.data);
         setStreamsList(streamsList.concat(response.data.data));
         setPage(response.data.pagination.cursor);
       })
@@ -51,18 +53,9 @@ const VideoListComponent = (props: any) => {
     setLoading(false);
   };
 
+  // 페이지 마운트때 한번 호출
   useEffect(() => {
-    console.log(header);
-    axios
-      .get('https://api.twitch.tv/helix/streams', { headers: header })
-      .then(response => {
-        console.log(response.data.data);
-        setStreamsList(response.data.data);
-        setPage(response.data.pagination.cursor);
-      })
-      .catch(error => {
-        console.log(error);
-      });
+    getItemList();
   }, []);
 
   useEffect(() => {
@@ -74,24 +67,27 @@ const VideoListComponent = (props: any) => {
 
   return (
     <>
-      <div id="greeting">
+      <div id="greeting" className="bg-black">
         <h1 className="text-white text-2xl">트위치에 오신걸 환영합니다.</h1>
       </div>
       {streamsList &&
-        streamsList?.map((item, idx) => {
+        streamsList.map((item: streamsType, idx: number) => {
           const thumbnail = item.thumbnail_url.replace(
             '{width}x{height}',
             '300x230',
           );
           return (
-            <Link to={`channel/${item.user_id}`}>
-              <React.Fragment key={item.id}>
+            <Link
+              to={`channel/${item.user_id}`}
+              className="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-md hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 m-8"
+            >
+              <div key={item.id}>
                 {streamsList.length - 5 === idx ? (
                   <div
-                    className="flex flex-col font-sans text-white  m-6"
+                    className="flex flex-col font-sans text-white  m-2"
                     ref={ref}
                   >
-                    <img src={thumbnail} alt={item.title} className="rounded" />
+                    <img src={thumbnail} alt={item.title} className="" />
                     <p key={item.id}>
                       {item.title}
                       <br />
@@ -105,7 +101,7 @@ const VideoListComponent = (props: any) => {
                     })}
                   </div>
                 ) : (
-                  <div className="flex flex-col font-sans text-white  m-6">
+                  <div className="flex flex-col font-sans text-white  m-2">
                     <img src={thumbnail} alt={item.title} className="rounded" />
                     <p key={item.id}>
                       {item.title}
@@ -120,7 +116,7 @@ const VideoListComponent = (props: any) => {
                     })}
                   </div>
                 )}
-              </React.Fragment>
+              </div>
             </Link>
           );
         })}

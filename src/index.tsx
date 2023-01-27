@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
 import MainComponent from './components/MainComponent';
 import Channel from './pages/Channel';
+import Stream from './pages/Stream';
 
 const router = createBrowserRouter([
   {
@@ -15,6 +16,10 @@ const router = createBrowserRouter([
   {
     path: 'channel/:userId',
     element: <Channel />,
+  },
+  {
+    path: 'channel/:userId/:sereadId',
+    element: <Stream />,
   },
 ]);
 
