@@ -1,36 +1,24 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import { CookiesProvider } from 'react-cookie';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
-import MainComponent from './components/MainComponent';
-import Channel from './pages/Channel';
-import Stream from './pages/Stream';
+import App from './App';
+import { Provider } from 'react-redux';
+import rootReducer from './modules';
+import { configureStore } from '@reduxjs/toolkit';
 
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <MainComponent />,
-  },
-  {
-    path: 'channel/:userId',
-    element: <Channel />,
-  },
-  {
-    path: 'channel/:userId/:sereadId',
-    element: <Stream />,
-  },
-]);
-
+const store = configureStore({ reducer: rootReducer });
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
 );
 root.render(
   <React.StrictMode>
-    <CookiesProvider>
-      <RouterProvider router={router} />
-    </CookiesProvider>
+    <Provider store={store}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </Provider>
   </React.StrictMode>,
 );
 

@@ -1,10 +1,8 @@
-import axios from 'axios';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
 import { useInView } from 'react-intersection-observer';
 import { Link } from 'react-router-dom';
-
-const nextPageUrl = 'https://api.twitch.tv/helix/streams?first=40&after=';
+import useStreamsFetch from '../hooks/useStreamsFetch';
 
 interface streamsType {
   game_id: string;
@@ -26,100 +24,83 @@ interface streamsType {
 
 const VideoListComponent = () => {
   const [twitchTokenCookies] = useCookies(['twitchAccessToken']);
-  const [streamsList, setStreamsList] = useState([]);
-  const [ref, inView] = useInView();
   const [page, setPage] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const header = {
-    'client-id': 'k5fvg1rha0tyqhd8hwsavocg2h051u',
-    Authorization: `Bearer ${twitchTokenCookies.twitchAccessToken}`,
-  };
-
-  // 서버에서 아이템을 가지고 오는 함수
-  const getItemList = () => {
-    setLoading(true);
-    axios
-      .get(`${nextPageUrl}${page}`, {
-        headers: header,
-      })
-      .then(response => {
-        setStreamsList(streamsList.concat(response.data.data));
-        setPage(response.data.pagination.cursor);
-      })
-      .catch(error => {
-        console.log(error);
-      });
-    setLoading(false);
-  };
-
-  // 페이지 마운트때 한번 호출
-  useEffect(() => {
-    getItemList();
-  }, []);
+  const [ref, inView] = useInView();
+  /**
+   * 스트리밍 획득 hook
+   */
+  const { nextPage, list } = useStreamsFetch(
+    twitchTokenCookies.twitchAccessToken,
+    page,
+  );
 
   useEffect(() => {
-    // 사용자가 마지막 요소를 보고 있고, 로딩 중이 아니라면
-    if (inView && !loading) {
-      getItemList();
+    /**
+     * intersection Observer api를 통해 infinite scroll을 구현할수 있다.
+     * 브라우저에서 지원하는 api로 document의 viewport 사이의 intersection 내의 변화를 비동기적으로 관찰할수 있는 방법이다.
+     * 해당 api를 react 라이브러리로 true/false 로 반환하는 hook이 있었고 그 hook을 통해서 구현하였다.
+     */
+    if (inView) {
+      setPage(nextPage);
     }
-  }, [inView, loading]);
+  }, [inView]);
 
   return (
     <>
-      <div id="greeting" className="bg-black">
-        <h1 className="text-white text-2xl">트위치에 오신걸 환영합니다.</h1>
+      <div id="greeting" className="bg-black m-4">
+        <h1 className="text-white text-2xl m-4">트위치에 오신걸 환영합니다.</h1>
       </div>
-      {streamsList &&
-        streamsList.map((item: streamsType, idx: number) => {
-          const thumbnail = item.thumbnail_url.replace(
-            '{width}x{height}',
-            '300x230',
-          );
-          return (
-            <Link
-              to={`channel/${item.user_id}`}
-              className="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-md hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 m-8"
-            >
-              <div key={item.id}>
-                {streamsList.length - 5 === idx ? (
-                  <div
-                    className="flex flex-col font-sans text-white  m-2"
-                    ref={ref}
-                  >
-                    <img src={thumbnail} alt={item.title} className="" />
-                    <p key={item.id}>
-                      {item.title}
-                      <br />
-                    </p>
-                    <p>
-                      {item.user_name} - 시청자 : {item.viewer_count}{' '}
-                      {item.type}
-                    </p>
-                    {item?.tags?.map((tag: any) => {
-                      return <p className="">{tag}</p>;
-                    })}
-                  </div>
-                ) : (
-                  <div className="flex flex-col font-sans text-white  m-2">
-                    <img src={thumbnail} alt={item.title} className="rounded" />
-                    <p key={item.id}>
-                      {item.title}
-                      <br />
-                    </p>
-                    <p>
-                      {item.user_name} - 시청자 : {item.viewer_count}{' '}
-                      {item.type}
-                    </p>
-                    {item?.tags?.map((tag: any) => {
-                      return <p className="">{tag}</p>;
-                    })}
-                  </div>
-                )}
-              </div>
-            </Link>
-          );
-        })}
+      <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-4">
+        {list &&
+          list.map((item: streamsType, idx: number) => {
+            const thumbnail = item.thumbnail_url.replace(
+              '{width}x{height}',
+              '300x230',
+            );
+            return (
+              <Link
+                to={`channel/${item.user_id}`}
+                className="flex  justify-center items-center bg-gray-800 rounded-xl ml-3 mb-3"
+                key={item.id}
+              >
+                <div>
+                  {/** infinite scroll 구현에서 리스트 길이의 5번째 전에 ref로 돔의 변경 상태를 체크 해서 다음 리스트를 호출 */}
+                  {list.length - 5 === idx ? (
+                    <ul className="font-sans text-white p-3" ref={ref}>
+                      <img
+                        src={thumbnail}
+                        alt={item.title}
+                        className="rounded"
+                      />
+                      <li className="truncate">{item.title}</li>
+                      <li>
+                        아이디 : {item.user_name} - 시청자 : {item.viewer_count}{' '}
+                      </li>
+                    </ul>
+                  ) : (
+                    <div className=" font-sans text-white p-3">
+                      <img
+                        src={thumbnail}
+                        alt={item.title}
+                        className="rounded"
+                      />
+                      <li
+                        key={item.id}
+                        className="truncate list-none w-[250px]"
+                      >
+                        {item.title}
+                      </li>
+                      <li className="list-none">아이디 : {item.user_name}</li>
+                      <li className="list-none">
+                        시청자 : {item.viewer_count}{' '}
+                      </li>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+      </div>
     </>
   );
 };
